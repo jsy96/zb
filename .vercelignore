@@ -5,4 +5,6 @@ env.local
 gui-test-screenshots
 server.js
 start.bat
+1git.bat
+push-env.js
 test-asr*
