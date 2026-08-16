@@ -1,6 +1,6 @@
 {
   "name": "zb",
-  "version": "1.0.260816-1",
+  "version": "1.0.260816-2",
   "private": true,
   "description": "直播话术整理台 · 实时版（静态前端 + Vercel api/ 函数）",
   "engines": {

@@ -5,7 +5,7 @@
 "use strict";
 
 // 版本号（格式 v主.次.YYMMDD-当日序号），界面顶栏由它自动填充
-const APP_VERSION = "v1.0.260816-1";
+const APP_VERSION = "v1.0.260816-2";
 
 /* ---------- 小工具 ---------- */
 

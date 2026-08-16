@@ -22,6 +22,9 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* 通用隐藏类：JS 切换显示用（!important 压过组件自身的 display 规则） */
+.hidden { display: none !important; }
+
 html, body { height: 100%; }
 
 body {
@@ -401,8 +404,6 @@ button { font-family: inherit; cursor: pointer; }
 
 .detail { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
-#detail.hidden { display: none; }
-
 .d-head {
   flex: none;
   display: flex;
@@ -527,7 +528,6 @@ button { font-family: inherit; cursor: pointer; }
   font-family: var(--sans);
   color: var(--ink);
 }
-.d-text.hidden { display: none; }
 
 /* ---------- 设置弹窗 ---------- */
 
@@ -541,7 +541,6 @@ button { font-family: inherit; cursor: pointer; }
   z-index: 100;
   padding: 20px;
 }
-.modal.hidden { display: none; }
 
 .modal-card {
   background: var(--card);
