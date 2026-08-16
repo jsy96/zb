@@ -1,0 +1,8 @@
+# 这些文件不会部署到 Vercel（防止本地密钥泄漏）
+env.local
+.env
+.env.local
+gui-test-screenshots
+server.js
+start.bat
+test-asr*

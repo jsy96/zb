@@ -1,0 +1,15 @@
+# 密钥与本地配置（绝不能上传）
+env.local
+.env
+.env.local
+.env*
+
+# 本地产物
+gui-test-screenshots/
+node_modules/
+*.wav
+*.log
+
+# 系统
+Thumbs.db
+.DS_Store

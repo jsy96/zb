@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直播话术整理台 · 实时版</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ======== 顶栏 ======== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="live-dot" id="liveDot"></span>
+      <span class="brand-name">直播话术整理台</span>
+      <span class="brand-en">LIVE SCRIPT STUDIO</span>
+    </div>
+    <div class="top-actions">
+      <span id="recBadge" class="rec-badge hidden">● 录音中 <b id="micTimer">00:00</b></span>
+      <span id="keyStatus" class="key-dot off" title=""></span>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- ======== 上：实时转写 ======== -->
+    <section class="pane transcript-pane">
+      <div class="pane-head">
+        <h2><span class="ph-cn">实时转写</span><span class="ph-en">TRANSCRIPT</span></h2>
+        <div class="mic-controls">
+          <select id="engineSel" title="识别引擎">
+            <option value="sr">浏览器识别（免 Key）</option>
+            <option value="server">服务器识别（glm-asr）</option>
+          </select>
+          <button id="micStart" class="btn-accent" type="button">🎤 开始录音</button>
+          <button id="micStop" class="btn-dark hidden" type="button">■ 停止录音</button>
+          <span id="micStatus" class="mic-status"></span>
+        </div>
+      </div>
+      <textarea id="transcript" spellcheck="false"
+        placeholder="点「开始录音」，这里会实时显示转写文字（可直接改错字）；也可以把现成的文字稿粘贴进来"></textarea>
+      <div class="transcript-foot">
+        <span id="micInterim" class="interim"></span>
+        <span class="spacer"></span>
+        <span id="charCount" class="muted">0 字</span>
+        <button id="loadDemo" class="btn-ghost" type="button">填入演示文稿</button>
+        <button id="btnClear" class="btn-ghost" type="button">清空</button>
+      </div>
+    </section>
+
+    <!-- ======== 下：左商品列表 + 右详情 ======== -->
+    <section class="bottom">
+
+      <aside class="pane list-pane">
+        <div class="pane-head">
+          <h2><span class="ph-cn">商品列表</span><span class="ph-en">PRODUCTS</span></h2>
+          <span id="orgStatus" class="org-status"></span>
+        </div>
+        <div id="products" class="prod-list" role="list"></div>
+        <div id="productsEmpty" class="empty">
+          还没有商品<br><small>开始录音（或填入演示文稿），AI 会自动按商品切分整理，出现在这里</small>
+        </div>
+        <div class="list-foot">
+          <div class="list-actions">
+            <button id="btnOrganize" class="btn-accent" type="button">⚡ 立即整理</button>
+            <button id="exportAll" class="btn-dark" type="button" disabled>⬇ 导出全部 MD</button>
+            <button id="copyAll" class="btn-ghost" type="button" disabled>复制全部</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="pane detail-pane">
+        <div id="detailEmpty" class="empty">
+          左侧选择一个商品<br><small>右侧会显示它的口语版和书面语版整理结果，可直接编辑</small>
+        </div>
+        <div id="detail" class="detail hidden">
+          <div class="d-head">
+            <span class="d-idx" id="dIdx">01</span>
+            <input id="dName" class="d-name" spellcheck="false" placeholder="商品名">
+            <input id="dPrice" class="d-price" spellcheck="false" placeholder="价格未提到">
+            <span id="dNew" class="badge-new hidden">新</span>
+            <span class="spacer"></span>
+            <button id="dCopy" class="btn-ghost" type="button">复制本商品</button>
+            <button id="dDel" class="btn-ghost danger" type="button">删除</button>
+          </div>
+          <div class="d-meta" id="dHl"></div>
+          <div class="d-tabs" role="tablist">
+            <button class="d-tab active" data-v="spoken" type="button">口语版 · 原话整理</button>
+            <button class="d-tab" data-v="written" type="button">书面语版 · 详情页文案</button>
+          </div>
+          <div class="d-body">
+            <textarea id="dSpoken" class="d-text" spellcheck="false" data-v="spoken"
+              placeholder="口语版会保留主播原话风格，只去掉口癖和闲聊"></textarea>
+            <textarea id="dWritten" class="d-text hidden" spellcheck="false" data-v="written"
+              placeholder="书面语版是整理后的详情页 / 宣传文案"></textarea>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <div id="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
