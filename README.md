@@ -45,25 +45,30 @@
 
 ## 部署到 Vercel
 
-项目根目录的静态文件 + `api/` 目录开箱即用，零配置（`env.local` 等本地文件已被 `.vercelignore` 排除，不会上传）：
+项目根目录的静态文件 + `api/` 目录开箱即用，零配置（`env.local` 等本地文件已被 `.vercelignore` 排除，不会上传）。三步：
 
 ```bash
 npm i -g vercel
-vercel          # 首次按提示登录、选项目
-vercel --prod   # 正式发布
+vercel              # ① 首次：登录、建项目（起个名，如 zb）
+node push-env.js    # ② 把 env.local 的变量导入 Vercel（--dry 可先预览）
+vercel --prod       # ③ 正式发布
 ```
 
-在 Vercel 项目 **Settings → Environment Variables** 配置（对应 env.local 的角色）：
+`push-env.js` 会把 `env.local` 里的变量原样导入 Vercel 的 production / preview / development 三个环境——**后端认识这些小写名字**（`zhipu_apikey` / `siliconflow_apikey` / `auto_delay` / `auto_interval`），导入即生效，不需要改名。已存在的变量会自动跳过（想改值：`vercel env rm 名称 环境` 删掉后重跑）。
 
-| 变量 | 说明 |
-|------|------|
-| `API_KEY` | 整理用的 Key（智谱或硅基流动） |
-| `API_BASE` | 整理接口地址（智谱默认可省） |
-| `LLM_MODEL` | 整理模型 |
-| `ASR_API_KEY` | 转写用的 Key（和整理分开时填） |
-| `ASR_BASE_URL` | 转写接口地址（如 `https://api.siliconflow.cn/v1`） |
-| `ASR_MODEL` | 转写模型（如 `FunAudioLLM/SenseVoiceSmall`） |
-| `AUTO_DELAY` / `AUTO_INTERVAL` | 自动整理参数（秒） |
+不想用脚本，也可以在 Vercel 后台 **Settings → Environment Variables** 手动配。两套名字都认：
+
+| 简单名（推荐，和 env.local 一致） | 规范名（等效） | 说明 |
+|------|------|------|
+| `zhipu_apikey` | `API_KEY` | 整理用的智谱 Key |
+| `siliconflow_apikey` | `ASR_API_KEY` | 转写用的硅基流动 Key |
+| — | `ASR_BASE_URL` | 转写接口（配了硅基流动 Key 会自动填 `https://api.siliconflow.cn/v1`，可不填） |
+| — | `ASR_MODEL` | 转写模型（同上，自动 `FunAudioLLM/SenseVoiceSmall`） |
+| — | `API_BASE` / `LLM_MODEL` | 整理接口 / 模型（默认智谱 `glm-4.5-flash`，可不填） |
+| `auto_delay` | `AUTO_DELAY` | 文稿稳定几秒后自动整理（默认 8） |
+| `auto_interval` | `AUTO_INTERVAL` | 录音中每隔几秒整理一次（默认 30） |
+
+两家 Key 的分工规则与本地一致：**都配 = 整理走智谱 + 转写走硅基流动（全免费组合）**；只配智谱 = 全走智谱（转写按量计费）；只配硅基流动 = 全走硅基流动（免费，整理模型稍弱）。
 
 ## 已知限制
 
@@ -84,6 +89,8 @@ api/process.js    POST /api/process 文稿 → 按商品切分整理
 api/asr.js        POST /api/asr     WAV 音频段 → 文字
 api/test.js       POST /api/test    连接测试
 env.local         本地配置（Key + 参数，不随部署上传）
+push-env.js       把 env.local 一键导入 Vercel 环境变量（--dry 预览）
 server.js         本地开发服务器（静态 + API 路由，与 Vercel 同一套代码）
 start.bat         一键启动
+1git.bat          提交并推送到 Gitee
 ```
