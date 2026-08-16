@@ -10,6 +10,9 @@ node_modules/
 *.wav
 *.log
 
+# Vercel 项目关联（本机标识，不用上传）
+.vercel/
+
 # 系统
 Thumbs.db
 .DS_Store
