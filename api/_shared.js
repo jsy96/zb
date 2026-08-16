@@ -246,6 +246,104 @@ async function callAsr(cfg, wavBuffer, filename) {
   return String(j.text || "").trim();
 }
 
+/* ---------- 超长音频：自动分段识别 ----------
+   上游 ASR 普遍限制单条 ≤60 秒；/api/asr 收到更长的 WAV 时在这里
+   自动切成 ≤55 秒的段、逐段识别、按顺序拼接文字 */
+
+const ASR_SEG_SEC = 55;
+// Vercel 单次函数最长 60s（两段识别约 50s），平台上限外再长就会超时；本地 server.js 无此限制
+const ASR_MAX_TOTAL_SEC = process.env.VERCEL ? 110 : 1800;
+
+// 解析 16-bit PCM WAV（单声道/立体声均可），失败返回 null
+function parseWav16(buf) {
+  if (buf.length < 44) return null;
+  const v = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const tag = (o) => String.fromCharCode(v.getUint8(o), v.getUint8(o + 1), v.getUint8(o + 2), v.getUint8(o + 3));
+  if (tag(0) !== "RIFF" || tag(8) !== "WAVE") return null;
+  let off = 12, fmt = null, dataOff = -1, dataLen = 0;
+  while (off + 8 <= buf.length) {
+    const id = tag(off);
+    const size = v.getUint32(off + 4, true);
+    if (id === "fmt ") {
+      fmt = {
+        format: v.getUint16(off + 8, true),
+        channels: v.getUint16(off + 10, true),
+        rate: v.getUint32(off + 12, true),
+        bits: v.getUint16(off + 22, true),
+      };
+    } else if (id === "data") {
+      dataOff = off + 8;
+      dataLen = Math.min(size, buf.length - dataOff);
+      break;
+    }
+    off += 8 + size + (size & 1); // chunk 按 2 字节对齐
+  }
+  if (!fmt || dataOff < 0 || fmt.format !== 1 || fmt.bits !== 16 || !fmt.rate || fmt.channels < 1) return null;
+  return { rate: fmt.rate, channels: fmt.channels, samples: Math.floor(dataLen / 2 / fmt.channels), v, dataOff };
+}
+
+// 混成单声道 Float32
+function wavToMono(w) {
+  const out = new Float32Array(w.samples);
+  for (let i = 0; i < w.samples; i++) {
+    let s = 0;
+    for (let ch = 0; ch < w.channels; ch++) {
+      s += w.v.getInt16(w.dataOff + (i * w.channels + ch) * 2, true);
+    }
+    out[i] = s / w.channels / 32768;
+  }
+  return out;
+}
+
+// 线性重采样（识别服务对 16k 最友好）
+function resample(f32, from, to) {
+  if (from === to || !from || !to) return f32;
+  const ratio = from / to;
+  const n = Math.floor(f32.length / ratio);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const p = i * ratio, i0 = Math.floor(p), fr = p - i0;
+    out[i] = f32[i0] * (1 - fr) + (f32[i0 + 1] !== undefined ? f32[i0 + 1] : f32[i0]) * fr;
+  }
+  return out;
+}
+
+// Float32 单声道 → 16k 16-bit WAV Buffer
+function encodeWav16(f32, rate) {
+  const pcm = resample(f32, rate, 16000);
+  const out = Buffer.alloc(44 + pcm.length * 2);
+  out.write("RIFF", 0); out.writeUInt32LE(36 + pcm.length * 2, 4); out.write("WAVE", 8);
+  out.write("fmt ", 12); out.writeUInt32LE(16, 16); out.writeUInt16LE(1, 20); out.writeUInt16LE(1, 22);
+  out.writeUInt32LE(16000, 24); out.writeUInt32LE(32000, 28); out.writeUInt16LE(2, 32); out.writeUInt16LE(16, 34);
+  out.write("data", 36); out.writeUInt32LE(pcm.length * 2, 40);
+  for (let i = 0; i < pcm.length; i++) {
+    const x = Math.max(-1, Math.min(1, pcm[i]));
+    out.writeInt16LE(Math.round(x < 0 ? x * 0x8000 : x * 0x7fff), 44 + i * 2);
+  }
+  return out;
+}
+
+async function callAsrAuto(cfg, wavBuffer, filename) {
+  const w = parseWav16(wavBuffer);
+  const dur = w ? w.samples / w.rate : 0;
+  // 不是标准 16-bit WAV、或时长在上游限制内：整条直传（保持原行为）
+  if (!w || dur <= ASR_SEG_SEC) return callAsr(cfg, wavBuffer, filename);
+  if (dur > ASR_MAX_TOTAL_SEC) {
+    throw new Error("音频约 " + Math.round(dur / 60) + " 分钟，超过 " + ASR_MAX_TOTAL_SEC / 60 + " 分钟上限，请切短后再传");
+  }
+  const mono = wavToMono(w);
+  const segSamples = Math.floor(ASR_SEG_SEC * w.rate);
+  const nSeg = Math.ceil(mono.length / segSamples);
+  const parts = [];
+  for (let s = 0; s < mono.length; s += segSamples) {
+    const seg = mono.subarray(s, Math.min(mono.length, s + segSamples));
+    const text = await callAsr(cfg, encodeWav16(seg, w.rate), filename);
+    if (text) parts.push(text);
+  }
+  console.log("[asr] 音频 " + dur.toFixed(1) + "s，自动分 " + nSeg + " 段识别完成");
+  return parts.join("");
+}
+
 module.exports = {
   resolveConfig,
   readJsonBody,
@@ -255,4 +353,5 @@ module.exports = {
   chatExtract,
   extractProducts,
   callAsr,
+  callAsrAuto,
 };
