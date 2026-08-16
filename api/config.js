@@ -14,9 +14,12 @@ module.exports = async (req, res) => {
     : /dashscope/.test(base) ? "阿里百炼"
     : (base.replace(/^https?:\/\//, "").split("/")[0] || "未知");
   const num = (v, d) => {
+    if (v === undefined || v === null || v === "") return d;
     const n = Number(v);
     return Number.isFinite(n) && n >= 0 ? n : d;
   };
+  const delay = process.env.AUTO_DELAY || process.env.auto_delay;
+  const interval = process.env.AUTO_INTERVAL || process.env.auto_interval;
   return sendJson(res, 200, {
     ok: true,
     hasKey: !!cfg.apiKey,
@@ -27,7 +30,7 @@ module.exports = async (req, res) => {
     asrModel: cfg.asrModel,
     asrBaseUrl: cfg.asrBaseUrl || base,
     source: process.env._ENV_SOURCE || "服务器环境变量",
-    autoDelay: Math.min(120, num(process.env.AUTO_DELAY, 8)),
-    autoInterval: Math.min(600, num(process.env.AUTO_INTERVAL, 30)),
+    autoDelay: Math.min(120, num(delay, 8)),
+    autoInterval: Math.min(600, num(interval, 30)),
   });
 };

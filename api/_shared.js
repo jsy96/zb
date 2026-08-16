@@ -7,15 +7,39 @@ const DEFAULT_BASE = "https://open.bigmodel.cn/api/paas/v4";
 
 function resolveConfig(c) {
   c = c && typeof c === "object" ? c : {};
-  const apiKey = String(c.apiKey || process.env.API_KEY || process.env.ZHIPU_API_KEY || "").trim();
+  const env = process.env;
+  // 同时认两套名字：规范名（API_KEY / ASR_API_KEY…，Vercel 后台或显式配置用）
+  // 和 env.local 的友好名（zhipu_apikey / siliconflow_apikey，vercel env upload env.local 直传用）
+  const zhipu = String(env.ZHIPU_API_KEY || env.zhipu_apikey || "").trim();
+  const sf = String(env.SILICONFLOW_API_KEY || env.siliconflow_apikey || "").trim();
+  const apiKey = String(c.apiKey || env.API_KEY || zhipu || sf || "").trim();
+  let baseUrl = String(c.baseUrl || env.API_BASE || "").trim().replace(/\/+$/, "");
+  let llmModel = String(c.llmModel || env.LLM_MODEL || "").trim();
+  let asrApiKey = String(c.asrApiKey || env.ASR_API_KEY || "").trim();
+  let asrBaseUrl = String(c.asrBaseUrl || env.ASR_BASE_URL || "").trim();
+  let asrModel = String(c.asrModel || env.ASR_MODEL || "").trim();
+
+  if (zhipu && sf && !asrApiKey) {
+    // 全免费组合：整理走智谱（glm-4.5-flash 免费），转写走硅基流动（SenseVoiceSmall 免费）
+    asrApiKey = sf;
+    asrBaseUrl = asrBaseUrl || "https://api.siliconflow.cn/v1";
+    asrModel = asrModel || "FunAudioLLM/SenseVoiceSmall";
+  } else if (!zhipu && sf && !env.API_KEY && !c.apiKey) {
+    // 只配了硅基流动：整理、转写都走它（全免费）
+    baseUrl = baseUrl || "https://api.siliconflow.cn/v1";
+    llmModel = llmModel || "THUDM/GLM-4-9B-0414";
+    asrApiKey = asrApiKey || sf;
+    asrBaseUrl = asrBaseUrl || "https://api.siliconflow.cn/v1";
+    asrModel = asrModel || "FunAudioLLM/SenseVoiceSmall";
+  }
+
   return {
     apiKey,
-    baseUrl: String(c.baseUrl || process.env.API_BASE || DEFAULT_BASE).trim().replace(/\/+$/, ""),
-    llmModel: String(c.llmModel || process.env.LLM_MODEL || "glm-4.5-flash").trim(),
-    // 转写可以单独用另一家服务（例如：整理走智谱、转写走硅基流动，两边都免费）
-    asrApiKey: String(c.asrApiKey || process.env.ASR_API_KEY || apiKey).trim(),
-    asrBaseUrl: String(c.asrBaseUrl || process.env.ASR_BASE_URL || "").trim(),
-    asrModel: String(c.asrModel || process.env.ASR_MODEL || "glm-asr").trim(),
+    baseUrl: baseUrl || DEFAULT_BASE,
+    llmModel: llmModel || "glm-4.5-flash",
+    asrApiKey: asrApiKey || apiKey,
+    asrBaseUrl,
+    asrModel: asrModel || "glm-asr",
   };
 }
 
