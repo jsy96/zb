@@ -4,6 +4,9 @@
    后端接口：/api/process（LLM 切分整理）、/api/asr（服务器识别）、/api/test */
 "use strict";
 
+// 版本号（格式 v主.次.YYMMDD-当日序号），界面顶栏由它自动填充
+const APP_VERSION = "v1.0.260816-1";
+
 /* ---------- 小工具 ---------- */
 
 const $ = (id) => document.getElementById(id);
@@ -620,6 +623,7 @@ const DEMO = `[00:12] 哈喽哈喽宝宝们晚上好呀，欢迎来到咱们直�
 /* ---------- 初始化 ---------- */
 
 function init() {
+  $("brandVer").textContent = APP_VERSION;
   try { engineChoice = localStorage.getItem("ltc2-engine") || ""; } catch (_) {}
   restore();
   updateCharCount();

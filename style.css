@@ -82,6 +82,14 @@ body {
   white-space: nowrap;
 }
 
+.brand-ver {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .05em;
+  color: #8a7f6b;
+  white-space: nowrap;
+}
+
 .top-actions { display: flex; align-items: center; gap: 14px; }
 
 .rec-badge {

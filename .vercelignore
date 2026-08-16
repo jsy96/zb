@@ -8,3 +8,4 @@ start.bat
 1git.bat
 push-env.js
 test-asr*
+.claude

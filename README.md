@@ -58,7 +58,11 @@ vercel --prod       # ③ 正式发布
 
 `push-env.js` 会把 `env.local` 里的变量原样导入 Vercel 的 production / preview / development 三个环境——**后端认识这些小写名字**（`zhipu_apikey` / `siliconflow_apikey` / `auto_delay` / `auto_interval`），导入即生效，不需要改名。已存在的变量会自动跳过（想改值：`vercel env rm 名称 环境` 删掉后重跑）。
 
+项目已连接 GitHub 仓库（Gitee 推送后自动镜像过去）：每次 push 都会自动触发 Vercel 重新部署，无需再手动 `vercel --prod`。
+
 不想用脚本，也可以在 Vercel 后台 **Settings → Environment Variables** 手动配。两套名字都认：
+
+> ⚠️ **项目的 Framework Preset 必须是 `Other`**（Settings → General → Framework Preset）。若从 GitHub/Gitee 导入时被自动识别成 `Node.js`，云端会把根目录的前端 `app.js` 打成一个服务端函数（一访问就 `window is not defined` 崩溃、`api/` 函数全部失效），报 `FUNCTION_INVOCATION_FAILED`。改回 `Other` 后重新部署即可。
 
 | 简单名（推荐，和 env.local 一致） | 规范名（等效） | 说明 |
 |------|------|------|
@@ -84,7 +88,8 @@ vercel --prod       # ③ 正式发布
 ```
 index.html        页面（实时转写 + 商品列表 + 详情，无设置页）
 style.css         样式（纸面编辑风）
-app.js            前端逻辑（录音 / 转写 / 自动整理 / 导出）
+app.js            前端逻辑（录音 / 转写 / 自动整理 / 导出；顶部 APP_VERSION 版本号）
+package.json      项目信息（无依赖，声明 Node 引擎，Vercel 构建用）
 api/_shared.js    后端共享库（LLM 提示词、上游调用、合并逻辑）
 api/config.js     GET  /api/config  服务器配置探测（只回掩码 Key）
 api/process.js    POST /api/process 文稿 → 按商品切分整理
