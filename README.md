@@ -17,6 +17,8 @@
 
 ## 配置：env.local
 
+复制 `env.example` 为 `env.local`（`cp env.example env.local` 或手动复制），填入 Key 即可：
+
 | 变量 | 说明 | 默认 |
 |------|------|------|
 | `zhipu_apikey` | 智谱 Key（[open.bigmodel.cn](https://open.bigmodel.cn)），`glm-4.5-flash` 整理免费 | — |
@@ -88,6 +90,7 @@ api/config.js     GET  /api/config  服务器配置探测（只回掩码 Key）
 api/process.js    POST /api/process 文稿 → 按商品切分整理
 api/asr.js        POST /api/asr     WAV 音频段 → 文字
 api/test.js       POST /api/test    连接测试
+env.example       配置模板（Key 留空，复制为 env.local 后填写）
 env.local         本地配置（Key + 参数，不随部署上传）
 push-env.js       把 env.local 一键导入 Vercel 环境变量（--dry 预览）
 server.js         本地开发服务器（静态 + API 路由，与 Vercel 同一套代码）
